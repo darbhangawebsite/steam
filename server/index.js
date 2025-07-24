@@ -1,87 +1,38 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const SteamUser = require('steam-user');
-const SteamTotp = require('steam-totp');
-const path = require('path');
+const express = require("express");
+const bodyParser = require("body-parser");
+const SteamUser = require("steam-user");
+const path = require("path");
 
 const app = express();
 const client = new SteamUser();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static("frontend")); // Serve static files like HTML/CSS/JS
 
-// Serve login form
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-// Redirect /login to form
-app.get('/login', (req, res) => {
-  res.redirect('/');
-});
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
-// Handle login with optional shared secret
-app.post('/login', (req, res) => {
-  const { username, password, authCode, sharedSecret } = req.body;
-
-  let twoFactorCode = authCode;
-
-  // Auto-generate code if sharedSecret is provided
-  if (!authCode && sharedSecret) {
-    try {
-      twoFactorCode = SteamTotp.generateAuthCode(sharedSecret);
-    } catch (err) {
-      console.error("Failed to generate TOTP:", err);
-      return res.send("❌ Failed to generate 2FA code from shared secret.");
-    }
+  if (!username || !password) {
+    return res.send("Missing username or password.");
   }
 
-  const logOnOptions = {
-    accountName: username,
-    password: password,
-    twoFactorCode: twoFactorCode
-  };
+  client.logOn({ accountName: username, password });
 
-  let responded = false;
-  const safeSend = (message) => {
-    if (!responded) {
-      res.send(message);
-      responded = true;
-    }
-  };
+  client.once("loggedOn", () => {
+    console.log("Logged into Steam!");
+    return res.send("✅ Logged into Steam as: " + username);
+  });
 
-  const onLoggedOn = () => {
-    console.log("✅ Logged into Steam!");
-    client.setPersona(SteamUser.EPersonaState.Online);
-    client.gamesPlayed([730]); // Change to your game(s) if needed
-    safeSend("✅ Boosting started. Check your Steam profile.");
-    cleanup();
-  };
-
-  const onError = (err) => {
-    console.error("❌ Steam login error:", err);
-    safeSend("❌ Login failed: " + err.message);
-    cleanup();
-  };
-
-  const cleanup = () => {
-    client.removeListener('loggedOn', onLoggedOn);
-    client.removeListener('error', onError);
-  };
-
-  client.once('loggedOn', onLoggedOn);
-  client.once('error', onError);
-
-  client.logOn(logOnOptions);
+  client.once("error", (err) => {
+    console.error("Steam login error:", err);
+    return res.send("❌ Steam login failed: " + err.message);
+  });
 });
 
-// Stop boosting
-app.post('/stop', (req, res) => {
-  client.gamesPlayed([]);
-  res.send("🛑 Boosting stopped.");
-});
-
-// Start server
 app.listen(3000, () => {
-  console.log('🚀 Steam Idler running on http://localhost:3000');
+  console.log("Steam Idler running at http://localhost:3000");
 });
