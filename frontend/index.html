@@ -1,22 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Steam Idler</title>
+  <title>Steam Hour Booster</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    input, button {
+      margin: 8px;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #00aa88;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <h1>Steam Idler Booster</h1>
+  <h1>🎮 Steam Hour Booster</h1>
   <form action="/login" method="post">
-    <label>Username:</label><br>
-    <input type="text" name="username"><br>
-    <label>Password:</label><br>
-    <input type="password" name="password"><br>
-    <label>Steam Guard Code (if any):</label><br>
-    <input type="text" name="authCode"><br><br>
-    <button type="submit">Login & Start Boosting</button>
+    <input type="text" name="username" placeholder="Steam Username" required><br>
+    <input type="password" name="password" placeholder="Steam Password" required><br>
+    <input type="text" name="authCode" placeholder="Steam Guard Code (optional)"><br>
+    <input type="text" name="sharedSecret" placeholder="Shared Secret (optional)"><br>
+    <button type="submit">Start Boosting</button>
   </form>
 
   <form action="/stop" method="post">
-    <button type="submit">Stop Boost</button>
+    <button type="submit" style="background:#aa0044">Stop Boosting</button>
   </form>
 </body>
 </html>
